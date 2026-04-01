@@ -2,7 +2,7 @@ import express from "express";
 import multer from "multer";
 import File from "../../models/File.js";
 import {saveFile, getFilePath, deleteFile} from "../services/storage.services.js";
-import redis from "../config/redis.js"
+import {redis} from "../config/redis.js"
 import fs from "fs"
 
 
@@ -34,17 +34,20 @@ router.get("/:shareId",async(req,res)=>{
             return res.json({message:"File not found"});
         }
 
-        await redis.set(`file:${shareId}`,file,{ex:120});
+        await redis.set(`file:${shareId}`,file,"EX",120);
 
     }
     if( file.expiresAt &&  new Date(file.expiresAt) < Date.now()){
-        deleteFile(file.path);
-        await File.deleteOne({shareId});
-        await redis.del(`file:${shareId}`);
         return res.status(403).json({message:"Link expired"});
     }
 
+
+    if(!file.path || !fs.existsSync(file.path)){
+        return res.status(403).json({message:"File not found"});
+    }
+
     const filePath = getFilePath(file.path);
+
     res.setHeader("Content-type", file.mimetype);
     fs.createReadStream(filePath).pipe(res);
 })

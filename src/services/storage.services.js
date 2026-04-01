@@ -15,10 +15,14 @@ export const saveFile = (file)=>{
 }
 
 export const getFilePath = (storedPath)=>{
+    if(!storedPath) return;
     return path.resolve(storedPath);
 }
 
 export const deleteFile = (storedPath)=>{
+    if (!storedPath) return;
     const filePath = path.resolve(storedPath);
-    fs.unlinkSync(filePath);
+    if(fs.existsSync(filePath)){
+        fs.unlinkSync(filePath);
+    }
 }

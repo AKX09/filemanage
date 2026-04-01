@@ -3,6 +3,8 @@ import dotenv from "dotenv"
 import mongoose from "mongoose";
 import fileRoutes from "./src/routes/files.routes.js"
 // import File from "./models/File.js"
+import {cleanupQueue} from "./src/config/queue.js"
+import rateLimit from "express-rate-limit";
 
 dotenv.config();
 mongoose.connect(process.env.MONGO_URI)
@@ -15,6 +17,21 @@ app.use(express.json());
 const PORT = process.env.PORT;
 
 app.use("/files",fileRoutes);
+
+app.use("/files/upload",rateLimit({
+  windowMs:5*60*1000,
+  max:20
+}));
+
+await cleanupQueue.add(
+  "cleanup-job",
+  {},
+  {
+    repeat: { every: 5 * 60 * 1000 },
+    removeOnComplete: true,
+  }
+);
+
 
 app.listen(PORT,()=>{
     console.log(`Server listening on PORT ${PORT}`);
