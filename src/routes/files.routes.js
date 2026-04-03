@@ -26,15 +26,17 @@ router.post("/upload", upload.single("file"), async(req,res)=>{
 router.get("/:shareId",async(req,res)=>{
     const shareId = req.params.shareId;
     let file = await redis.get(`file:${shareId}`);
-
-    if(!file){
+    if(file){
+        file = JSON.parse(file);
+    }
+    else{
         file = await File.findOne({shareId});
 
         if(!file){
             return res.json({message:"File not found"});
         }
 
-        await redis.set(`file:${shareId}`,file,"EX",120);
+        await redis.set(`file:${shareId}`,JSON.stringify(file),"EX",120);
 
     }
     if( file.expiresAt &&  new Date(file.expiresAt) < Date.now()){
@@ -49,7 +51,13 @@ router.get("/:shareId",async(req,res)=>{
     const filePath = getFilePath(file.path);
 
     res.setHeader("Content-type", file.mimetype);
-    fs.createReadStream(filePath).pipe(res);
+    const stream = fs.createReadStream(filePath);
+
+    stream.on("error", () => {
+    return res.status(404).json({ message: "File not found" });
+    });
+
+    stream.pipe(res);
 })
 
 export default router;

@@ -20,7 +20,7 @@ app.use("/files",fileRoutes);
 
 app.use("/files/upload",rateLimit({
   windowMs:5*60*1000,
-  max:20
+  max:2000
 }));
 
 await cleanupQueue.add(

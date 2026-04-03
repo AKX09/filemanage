@@ -10,7 +10,7 @@ export const saveFile = (file)=>{
         size:file.size,
         mimetype:file.mimetype,
         shareId:uuid4(),
-        expiresAt:Date.now() + 60*1000
+        expiresAt:new Date(Date.now() + 10 * 60 * 1000)
     }
 }
 
